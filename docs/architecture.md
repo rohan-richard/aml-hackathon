@@ -44,9 +44,11 @@ Reading the actual code, claudecodeui works differently — corrections below. A
 (the real levers are build-time patches to a pinned copy, which are *more* robust than settings):
 
 1. **It spawns Claude via `@anthropic-ai/claude-agent-sdk` (v0.3.165), not the raw CLI.**
-   The SDK still needs the `claude` executable on disk (resolved from `CLAUDE_CLI_PATH` /
-   PATH), so we still install Claude Code. But model + permissions are set as *SDK options*
-   the UI passes, from its own pickers — NOT read from `.claude/settings.json availableModels`.
+   The SDK needs the `claude` executable on disk — and it **ships one per platform** as an
+   optional dep (`@anthropic-ai/claude-agent-sdk-<platform>-<arch>/claude`, ~220MB), pulled
+   in by `npm ci`. So we do NOT install Claude Code separately; the setup server points
+   `CLAUDE_CLI_PATH` at that bundled binary. Model + permissions are set as *SDK options* the
+   UI passes, from its own pickers — NOT read from `.claude/settings.json availableModels`.
 
 2. **Model lock = build-time patch, not settings.json.** The picker's model list lives in
    `server/modules/providers/list/claude/claude-models.provider.ts` (offers default/fable/
@@ -89,15 +91,16 @@ Reading the actual code, claudecodeui works differently — corrections below. A
 | Thing | Pin | Notes |
 |---|---|---|
 | Node | 20.x LTS portable build | darwin-arm64 + win-x64 |
-| Claude Code | latest stable at build; `bash install.sh -s <ver>` pins it | disable updates: `DISABLE_AUTOUPDATER=1` (+ `DISABLE_UPDATES=1` for full lock) |
-| claudecodeui | v1.36.1 (commit 038d960) | patched: sonnet-only models, skipPermissions=true default |
-| claude-agent-sdk | ^0.3.165 (as shipped by claudecodeui) | bundled in its node_modules |
+| Claude Code runtime | bundled by the agent SDK (`claude 2.1.165`) | pinned transitively via claude-agent-sdk; no separate install |
+| claudecodeui | v1.36.1 (commit 038d960) | patched: sonnet-only models, permission bypass forced server-side |
+| claude-agent-sdk | ^0.3.165 (as shipped by claudecodeui) | ships per-platform `claude` binary as an optional dep |
 | Starter stack | Vite + React | dev server fixed on port 3000 |
 
-Env the launcher must set when starting the UI server:
+Env the launcher sets when starting the UI server:
 - `ANTHROPIC_API_KEY=<team key>`
 - `DISABLE_AUTOUPDATER=1`, `DISABLE_UPDATES=1`
-- `CLAUDE_CLI_PATH=<bundle>/claude/...` (point the SDK at our pinned binary)
+- `CLAUDE_CLI_PATH=<ui>/node_modules/@anthropic-ai/claude-agent-sdk-<platform>-<arch>/claude[.exe]`
+- Windows: `CLAUDE_CODE_GIT_BASH_PATH=<PortableGit>/bin/bash.exe`
 - Windows: `CLAUDE_CODE_GIT_BASH_PATH=<bundle>/PortableGit/bin/bash.exe`
 
 ## Ports

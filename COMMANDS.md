@@ -31,6 +31,23 @@ curl -fsSL https://raw.githubusercontent.com/rohan-richard/aml-hackathon/main/un
 irm https://raw.githubusercontent.com/rohan-richard/aml-hackathon/main/uninstall.ps1 | iex
 ```
 
+## Nuke (full reset for end-to-end testing)
+
+Removes the workspace **and** any globally-installed Claude Code, so the next setup
+runs like a brand-new machine. Leaves your personal Claude config in `~/.claude` alone.
+(Node and Claude both live inside `~/aml-hackathon` now, so a plain uninstall already
+clears them — nuke additionally clears Claude installed globally by earlier versions.)
+
+**Mac:**
+```
+curl -fsSL https://raw.githubusercontent.com/rohan-richard/aml-hackathon/main/nuke.sh | bash
+```
+
+**Windows:**
+```
+irm https://raw.githubusercontent.com/rohan-richard/aml-hackathon/main/nuke.ps1 | iex
+```
+
 ## Clean restart (if a run got stuck or the port is busy)
 
 Close the old window first, then in a fresh terminal run one of these before re-running setup.

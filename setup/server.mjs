@@ -91,6 +91,19 @@ async function seedUser() {
   }
 }
 
+function resolveClaudeBin() {
+  // The agent SDK ships a full claude runtime per platform, installed by `npm ci`.
+  // Use it directly so we never need a separate Claude install (no installer prompt,
+  // and it lives inside ~/aml-hackathon so uninstall removes it).
+  const bin = process.platform === 'win32' ? 'claude.exe' : 'claude';
+  const bundled = path.join(
+    UI_DIR, 'node_modules', '@anthropic-ai',
+    `claude-agent-sdk-${process.platform}-${process.arch}`, bin,
+  );
+  if (existsSync(bundled)) return bundled;
+  return process.env.CLAUDE_CLI_PATH || null; // fall back to an explicit path / PATH
+}
+
 function uiEnv(key) {
   const env = {
     ...process.env,
@@ -103,7 +116,8 @@ function uiEnv(key) {
     DISABLE_AUTOUPDATER: '1',
     DISABLE_UPDATES: '1',
   };
-  if (process.env.CLAUDE_CLI_PATH) env.CLAUDE_CLI_PATH = process.env.CLAUDE_CLI_PATH;
+  const claudeBin = resolveClaudeBin();
+  if (claudeBin) env.CLAUDE_CLI_PATH = claudeBin;
   if (process.env.CLAUDE_CODE_GIT_BASH_PATH) env.CLAUDE_CODE_GIT_BASH_PATH = process.env.CLAUDE_CODE_GIT_BASH_PATH;
   return env;
 }

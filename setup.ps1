@@ -55,21 +55,10 @@ try {
   $env:CLAUDE_CODE_GIT_BASH_PATH = $GitBash
   OK 'Git ready'
 
-  # --- 3. Claude Code CLI (no admin; native installer) ---
-  Say 'Installing Claude Code...'
-  # Run the installer in an isolated child PowerShell so its pipeline can't consume
-  # this script's stdin (that nesting causes a spurious "press Enter" during setup).
-  try {
-    & powershell -NoProfile -ExecutionPolicy Bypass -Command `
-      "`$ProgressPreference='SilentlyContinue'; irm https://claude.ai/install.ps1 | iex" | Out-Null
-  } catch { }
-  $ClaudeBin = Join-Path $env:USERPROFILE '.local\bin\claude.exe'
-  if (-not (Test-Path $ClaudeBin)) { $ClaudeBin = (Get-Command claude -ErrorAction SilentlyContinue).Source }
-  if (-not $ClaudeBin -or -not (Test-Path $ClaudeBin)) { Die 'Claude Code did not install. Bring the laptop to the helpers table.' }
-  $env:CLAUDE_CLI_PATH = $ClaudeBin
-  OK 'Claude Code ready'
+  # Claude Code itself ships inside the UI's dependencies (installed in step 4) —
+  # no separate install, no installer prompts.
 
-  # --- 4. Download the app bundle ---
+  # --- 3. Download the app bundle ---
   Say 'Downloading the workspace...'
   $bundle = Join-Path $HomeDir 'bundle.tar.gz'
   Invoke-WebRequest -UseBasicParsing "https://github.com/$Repo/releases/latest/download/bundle.tar.gz" -OutFile $bundle
@@ -77,7 +66,8 @@ try {
   Remove-Item $bundle
   OK 'Workspace downloaded'
 
-  # --- 5. Install runtime dependencies (production only; prebuilt native modules) ---
+  # --- 4. Install runtime dependencies (production only; prebuilt native modules,
+  #        plus the bundled Claude Code runtime) ---
   Say 'Installing components (the longest step)...'
   Push-Location (Join-Path $HomeDir 'ui')
   & (Join-Path $NodeDir 'npm.cmd') ci --omit=dev --no-audit --no-fund
@@ -88,7 +78,7 @@ try {
   Pop-Location
   OK 'Components installed'
 
-  # --- 6. Launch ---
+  # --- 5. Launch ---
   Say 'Starting your workspace...'
   & $NodeExe (Join-Path $HomeDir 'setup\server.mjs')
 }

@@ -9,8 +9,6 @@ BUNDLE="$REPO_ROOT/dist-bundle/bundle.tar.gz"
 TEST_DIR="$REPO_ROOT/.localtest"
 
 [ -f "$BUNDLE" ] || { echo "No bundle found. Run: bash bundle-builder/build.sh"; exit 1; }
-CLAUDE_BIN="$(command -v claude || true)"
-[ -n "$CLAUDE_BIN" ] || { echo "claude not found on PATH. Install Claude Code first."; exit 1; }
 
 echo "▸ Fresh extract to $TEST_DIR"
 rm -rf "$TEST_DIR"; mkdir -p "$TEST_DIR"
@@ -24,5 +22,4 @@ echo "▸ Installing starter app deps…"
 
 echo "▸ Launching — the setup page will open. Paste a REAL team API key."
 cd "$TEST_DIR"
-export CLAUDE_CLI_PATH="$CLAUDE_BIN"
 exec node setup/server.mjs

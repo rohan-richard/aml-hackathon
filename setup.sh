@@ -32,15 +32,10 @@ fi
 export PATH="$NODE_DIR/bin:$PATH"
 ok "Node ready ($("$NODE_DIR/bin/node" -v))"
 
-# --- 2. Claude Code CLI (no admin; into ~/.local) ---
-say "Installing Claude Code…"
-curl -fsSL https://claude.ai/install.sh | bash >/dev/null 2>&1 || true
-CLAUDE_BIN="$(command -v claude || echo "$HOME/.local/bin/claude")"
-[ -x "$CLAUDE_BIN" ] || die "Claude Code did not install. Bring the laptop to the helpers' table."
-export CLAUDE_CLI_PATH="$CLAUDE_BIN"
-ok "Claude Code ready"
+# Claude Code itself ships inside the UI's dependencies (installed in step 3) —
+# no separate install, no installer prompts.
 
-# --- 3. Download the app bundle (pre-built UI + setup + starter project) ---
+# --- 2. Download the app bundle (pre-built UI + setup + starter project) ---
 say "Downloading the workspace…"
 curl -fsSL "https://github.com/${REPO}/releases/latest/download/bundle.tar.gz" -o bundle.tar.gz \
   || die "Could not download the workspace. Check you're on the office wifi, then try again."
@@ -50,14 +45,14 @@ rm -f bundle.tar.gz
 xattr -dr com.apple.quarantine "$HOME_DIR" >/dev/null 2>&1 || true
 ok "Workspace downloaded"
 
-# --- 4. Install runtime dependencies (production only; prebuilt native modules) ---
+# --- 3. Install runtime dependencies (production only; prebuilt native modules,
+#        plus the bundled Claude Code runtime) ---
 say "Installing components (the longest step)…"
 ( cd "$HOME_DIR/ui" && npm ci --omit=dev --no-audit --no-fund >/dev/null 2>&1 ) \
   || die "Dependency install failed. Check the office wifi and re-run, or see a helper."
 ( cd "$HOME_DIR/project" && npm install --no-audit --no-fund >/dev/null 2>&1 ) || true
 ok "Components installed"
 
-# --- 5. Launch ---
+# --- 4. Launch ---
 say "Starting your workspace…"
-export CLAUDE_BIN CLAUDE_CLI_PATH
 exec "$NODE_DIR/bin/node" "$HOME_DIR/setup/server.mjs"

@@ -3,92 +3,126 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Hackathon setup</title>
+<title>Amalgam · Hackathon setup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg: #0f1020;
-    --card: #1a1b2e;
-    --ink: #f4f5fb;
-    --muted: #a3a4c0;
-    --brand: #7c6cff;
-    --brand-ink: #fff;
-    --ok: #34d399;
-    --err: #fb7185;
-    --field: #24263f;
-    --line: #33355a;
+    --navy: #100029;        /* dark blue / secondary-darkest */
+    --ink: #020005;         /* near-black / text on brand */
+    --purple: #3801b7;      /* secondary-base */
+    --purple-light: #9471ff;/* secondary-light */
+    --turquoise: #11baac;   /* primary-base */
+    --turquoise-dark: #0e9d91;
+    --magenta: #d713f8;     /* tertiary */
+    --success: #10b981;
+    --error: #ff6b68;       /* error, lightened for dark bg (#e8201d base) */
+    --white: #ffffff;
+    --muted: rgba(255,255,255,0.66);
+    --subtle: rgba(255,255,255,0.42);
+    --stroke: rgba(255,255,255,0.10);
+    --stroke-strong: rgba(255,255,255,0.22);
+    --glass-fill: rgba(11,0,32,0.55);
+    --input-fill: rgba(2,0,5,0.32);
+    --glass-inset: inset 0.5px 1px 0 0 rgba(255,255,255,0.14), inset -0.5px -1px 0 0 rgba(255,255,255,0.05);
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; }
+  html, body { margin: 0; min-height: 100%; }
   body {
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: radial-gradient(120% 120% at 50% 0%, #1b1c34 0%, var(--bg) 55%);
-    color: var(--ink);
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    color: var(--white);
+    background-color: var(--navy);
+    background-image:
+      radial-gradient(95% 75% at 50% -5%, rgba(148,113,255,0.50) 0%, rgba(56,1,183,0.30) 40%, rgba(16,0,41,0) 72%),
+      linear-gradient(165deg, #100029 0%, #26105f 58%, #3801b7 145%);
+    background-attachment: fixed;
     display: grid;
     place-items: center;
     padding: 1.5rem;
+    -webkit-font-smoothing: antialiased;
   }
   .card {
+    position: relative;
     width: 100%;
     max-width: 30rem;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 20px;
-    padding: 2.5rem;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+    background: var(--glass-fill);
+    backdrop-filter: blur(22px) saturate(120%);
+    -webkit-backdrop-filter: blur(22px) saturate(120%);
+    border: 1px solid var(--stroke);
+    border-radius: 24px;
+    padding: 2.75rem 2.5rem;
+    box-shadow: 0 40px 90px rgba(2,0,5,0.55), var(--glass-inset);
   }
-  .logo { font-size: 2rem; }
-  h1 { font-size: 1.5rem; margin: 0.75rem 0 0.4rem; }
-  p.sub { color: var(--muted); margin: 0 0 1.75rem; line-height: 1.55; }
-  label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
-  .row { display: flex; gap: 0.5rem; }
+  .mark {
+    width: 46px; height: 46px; border-radius: 999px;
+    background: radial-gradient(120% 120% at 30% 25%, var(--turquoise) 0%, var(--purple) 55%, var(--magenta) 120%);
+    box-shadow: 0 0 22px rgba(17,186,172,0.45), var(--glass-inset);
+    margin-bottom: 1.1rem;
+  }
+  h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 0.45rem; }
+  p.sub { color: var(--muted); margin: 0 0 1.9rem; line-height: 1.55; font-size: 0.97rem; }
+  label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--subtle); margin-bottom: 0.55rem; letter-spacing: 0.01em; }
   input {
     width: 100%;
-    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
     font-size: 0.95rem;
-    padding: 0.85rem 1rem;
-    border-radius: 12px;
-    border: 1px solid var(--line);
-    background: var(--field);
-    color: var(--ink);
+    color: var(--white);
+    padding: 0.9rem 1.15rem;
+    border-radius: 999px;
+    border: 1px solid var(--stroke-strong);
+    background: var(--input-fill);
     outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
-  input:focus { border-color: var(--brand); }
+  input::placeholder { color: rgba(255,255,255,0.32); }
+  input:focus { border-color: var(--turquoise); box-shadow: 0 0 0 3px rgba(17,186,172,0.28); }
   button {
-    margin-top: 1.25rem;
+    margin-top: 1.4rem;
     width: 100%;
+    font-family: inherit;
     font-size: 1rem;
     font-weight: 600;
-    padding: 0.9rem 1rem;
+    color: var(--ink);
+    padding: 0.95rem 1rem;
     border: 0;
-    border-radius: 12px;
-    background: var(--brand);
-    color: var(--brand-ink);
+    border-radius: 999px;
+    background: var(--turquoise);
     cursor: pointer;
-    transition: transform 0.05s ease, opacity 0.2s ease;
+    box-shadow: var(--glass-inset), 0 6px 20px rgba(17,186,172,0.35);
+    transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.2s ease;
   }
-  button:hover { opacity: 0.92; }
+  button:hover { background: var(--turquoise-dark); }
   button:active { transform: translateY(1px); }
-  button:disabled { opacity: 0.5; cursor: default; }
-  .msg { margin-top: 1.1rem; font-size: 0.92rem; line-height: 1.5; min-height: 1.4em; }
-  .msg.err { color: var(--err); }
-  .msg.ok { color: var(--ok); }
+  button:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
+  .msg { margin-top: 1.15rem; font-size: 0.92rem; line-height: 1.5; min-height: 1.4em; }
+  .msg.err { color: var(--error); }
+  .msg.ok { color: var(--success); }
   .spinner {
     display: inline-block; width: 1em; height: 1em; vertical-align: -0.15em;
     border: 2px solid currentColor; border-right-color: transparent;
     border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 0.5em;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .foot { margin-top: 1.6rem; font-size: 0.78rem; color: var(--subtle); line-height: 1.55; }
+  a { color: var(--turquoise); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .brandline { margin-top: 1.9rem; padding-top: 1.15rem; border-top: 1px solid var(--stroke);
+    font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--subtle); }
+  /* success view */
   .success { text-align: center; }
-  .success .big { font-size: 3rem; }
-  .success h1 { margin-top: 0.5rem; }
-  .foot { margin-top: 1.5rem; font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
-  a { color: var(--brand); }
+  .success .check {
+    width: 64px; height: 64px; margin: 0 auto 1rem; border-radius: 999px;
+    display: grid; place-items: center; font-size: 2rem;
+    background: rgba(16,185,129,0.14);
+    box-shadow: 0 0 26px rgba(16,185,129,0.55), inset 0 0 8px rgba(16,185,129,0.3);
+  }
 </style>
 </head>
 <body>
   <div class="card" id="card">
     <div id="form-view">
-      <div class="logo">🚀</div>
+      <div class="mark"></div>
       <h1>Let's get your team set up</h1>
       <p class="sub">Paste the team key from your invite email below and press start.
         This takes about a minute — we'll do the rest.</p>
@@ -98,6 +132,7 @@
       <div class="msg" id="msg"></div>
       <div class="foot">Your key stays on this computer. If anything looks stuck, just message Rohan
         or raise your hand — no need to fix anything yourself.</div>
+      <div class="brandline">Amalgam · AI Hackathon</div>
     </div>
   </div>
 
@@ -130,13 +165,14 @@
   function showSuccess(url) {
     $('card').innerHTML =
       '<div class="success">' +
-      '<div class="big">✅</div>' +
+      '<div class="check">✅</div>' +
       '<h1>Team ready!</h1>' +
       '<p class="sub">Everything is set up. Take a screenshot of this screen and send it to Rohan, ' +
       'then click below to open your workspace.</p>' +
       '<button id="open">Open my workspace</button>' +
       '<div class="foot">Taking you there automatically… if it doesn\'t open, ' +
       'click the button or go to <a href="' + url + '">' + url + '</a></div>' +
+      '<div class="brandline">Amalgam · AI Hackathon</div>' +
       '</div>';
     $('open').onclick = () => location.href = url;
     setTimeout(() => { location.href = url; }, 3500);

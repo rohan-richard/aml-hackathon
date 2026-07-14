@@ -4,8 +4,10 @@ import { existsSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import https from 'node:https';
 
+const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const UI_DIR = path.join(ROOT, 'ui');
@@ -72,7 +74,9 @@ function validateKey(key) {
 
 async function seedUser() {
   // Platform mode needs exactly one user in the DB and never checks its password.
-  const { default: Database } = await import(path.join(UI_DIR, 'node_modules', 'better-sqlite3', 'lib', 'index.js'));
+  // Load via createRequire (not dynamic import) so the absolute path works on Windows,
+  // where ESM import() rejects bare `C:\...` paths.
+  const Database = require(path.join(UI_DIR, 'node_modules', 'better-sqlite3'));
   const db = new Database(DB_FILE);
   try {
     const row = db.prepare('SELECT COUNT(*) AS n FROM users').get();

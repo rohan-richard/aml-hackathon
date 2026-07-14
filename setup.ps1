@@ -57,7 +57,12 @@ try {
 
   # --- 3. Claude Code CLI (no admin; native installer) ---
   Say 'Installing Claude Code...'
-  try { irm https://claude.ai/install.ps1 | iex } catch { }
+  # Run the installer in an isolated child PowerShell so its pipeline can't consume
+  # this script's stdin (that nesting causes a spurious "press Enter" during setup).
+  try {
+    & powershell -NoProfile -ExecutionPolicy Bypass -Command `
+      "`$ProgressPreference='SilentlyContinue'; irm https://claude.ai/install.ps1 | iex" | Out-Null
+  } catch { }
   $ClaudeBin = Join-Path $env:USERPROFILE '.local\bin\claude.exe'
   if (-not (Test-Path $ClaudeBin)) { $ClaudeBin = (Get-Command claude -ErrorAction SilentlyContinue).Source }
   if (-not $ClaudeBin -or -not (Test-Path $ClaudeBin)) { Die 'Claude Code did not install. Bring the laptop to the helpers table.' }

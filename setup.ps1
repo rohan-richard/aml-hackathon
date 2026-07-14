@@ -1,6 +1,9 @@
 # One-command hackathon setup for Windows 11.
 # Usage (what teams paste): irm <raw-url>/setup.ps1 | iex
 $ErrorActionPreference = 'Stop'
+# Invoke-WebRequest is 10-50x slower on large files while it renders a progress bar.
+# Silencing it turns multi-minute "hangs" into seconds.
+$ProgressPreference = 'SilentlyContinue'
 
 $Repo        = 'rohan-richard/aml-hackathon'
 $NodeVersion = '20.18.1'
@@ -29,17 +32,26 @@ try {
   $env:Path = "$NodeDir;$env:Path"
   OK "Node ready ($(& $NodeExe -v))"
 
-  # --- 2. Portable Git (Claude Code needs Git Bash on Windows) ---
+  # --- 2. Git Bash (Claude Code needs it on Windows). Reuse an existing install if there is one. ---
   $GitDir  = Join-Path $HomeDir 'PortableGit'
-  $GitBash = Join-Path $GitDir 'bin\bash.exe'
-  if (-not (Test-Path $GitBash)) {
-    Say 'Installing a private copy of Git...'
+  $GitBash = $null
+  foreach ($p in @(
+      "$env:ProgramFiles\Git\bin\bash.exe",
+      "${env:ProgramFiles(x86)}\Git\bin\bash.exe",
+      (Join-Path $GitDir 'bin\bash.exe'))) {
+    if ($p -and (Test-Path $p)) { $GitBash = $p; break }
+  }
+  if (-not $GitBash) {
+    Say 'Installing a private copy of Git (about 50 MB, ~1 min)...'
     $gitExe = Join-Path $HomeDir 'git.7z.exe'
     $gitUrl = "https://github.com/git-for-windows/git/releases/download/v$GitVersion.windows.1/PortableGit-$GitVersion-64-bit.7z.exe"
     Invoke-WebRequest -UseBasicParsing $gitUrl -OutFile $gitExe
-    Start-Process -FilePath $gitExe -ArgumentList "-o`"$GitDir`" -y" -Wait
-    Remove-Item $gitExe
+    # Self-extracting 7-Zip archive: -y (no prompts), -gm2 (no window), -nr (no restart).
+    Start-Process -FilePath $gitExe -ArgumentList "-y -gm2 -nr -o`"$GitDir`"" -Wait -NoNewWindow
+    Remove-Item $gitExe -ErrorAction SilentlyContinue
+    $GitBash = Join-Path $GitDir 'bin\bash.exe'
   }
+  if (-not (Test-Path $GitBash)) { Die 'Could not set up Git Bash. Bring the laptop to the helpers table.' }
   $env:CLAUDE_CODE_GIT_BASH_PATH = $GitBash
   OK 'Git ready'
 

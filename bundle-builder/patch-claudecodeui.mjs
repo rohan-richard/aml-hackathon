@@ -103,4 +103,17 @@ await patchFile('src/contexts/ThemeContext.jsx', (src) => {
   return out;
 });
 
+// 6. Rebrand "CloudCLI" → "AML Agent" in the visible chrome (English UI).
+await patchFile('src/i18n/locales/en/sidebar.json', (src) =>
+  replaceOnce(src, '"title": "CloudCLI"', '"title": "AML Agent"', 'sidebar app.title brand'),
+);
+await patchFile('src/components/sidebar/view/subcomponents/SidebarProjectList.tsx', (src) =>
+  replaceOnce(src, "let baseTitle = 'CloudCLI UI';", "let baseTitle = 'AML Agent';", 'browser tab title'),
+);
+
+// 7. Minimal sidebar footer — drop Report Issue, Discord/community, version line, and
+//    update banners; keep only Settings.
+const minimalFooter = await readFile(new URL('./overrides/SidebarFooter.tsx', import.meta.url), 'utf8');
+await patchFile('src/components/sidebar/view/subcomponents/SidebarFooter.tsx', () => minimalFooter);
+
 console.log('all patches applied.');

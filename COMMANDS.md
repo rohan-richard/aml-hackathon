@@ -33,10 +33,13 @@ irm https://raw.githubusercontent.com/rohan-richard/aml-hackathon/main/uninstall
 
 ## Nuke (full reset for end-to-end testing)
 
-Removes the workspace **and** any globally-installed Claude Code, so the next setup
-runs like a brand-new machine. Leaves your personal Claude config in `~/.claude` alone.
-(Node and Claude both live inside `~/aml-hackathon` now, so a plain uninstall already
-clears them — nuke additionally clears Claude installed globally by earlier versions.)
+Bare-machine reset: removes the workspace, any globally-installed Claude Code, **and your
+machine-wide Node.js and Git** (via their official uninstallers / winget / Homebrew), so the
+next setup runs exactly like a brand-new laptop. Leaves your `~/.claude` config alone, and
+on macOS never touches the built-in `/usr/bin/git`.
+
+⚠️ This uninstalls your personal Node and Git — reinstall them afterward if you use them
+outside the hackathon. **Open a fresh terminal before re-running setup** so PATH refreshes.
 
 **Mac:**
 ```

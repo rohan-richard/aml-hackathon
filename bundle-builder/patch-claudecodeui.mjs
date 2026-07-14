@@ -76,4 +76,31 @@ await patchFile('server/claude-sdk.js', (src) =>
   ),
 );
 
+// 3. Amalgam brand theme — append our token override to the app's stylesheet.
+const amalgamCss = await readFile(new URL('./amalgam-theme.css', import.meta.url), 'utf8');
+await patchFile('src/index.css', (src) => `${src}\n\n${amalgamCss}`);
+
+// 4. Force dark mode always: dark class on <html> (avoids a light flash before React mounts).
+await patchFile('index.html', (src) =>
+  replaceOnce(src, '<html lang="en">', '<html lang="en" class="dark">', 'index.html dark class'),
+);
+
+// 5. Force dark mode in the theme provider and lock the toggle, so it can't fall back to
+//    light (default/system) or be switched off.
+await patchFile('src/contexts/ThemeContext.jsx', (src) => {
+  let out = replaceOnce(
+    src,
+    'const [isDarkMode, setIsDarkMode] = useState(() => {',
+    'const [isDarkMode, setIsDarkMode] = useState(true); const _origThemeInit = (() => {',
+    'ThemeContext force-dark init',
+  );
+  out = replaceOnce(
+    out,
+    'setIsDarkMode(prev => !prev);',
+    '/* hackathon: locked to dark */;',
+    'ThemeContext toggle lock',
+  );
+  return out;
+});
+
 console.log('all patches applied.');

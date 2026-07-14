@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hackathon setup</title>
+<style>
+  :root {
+    --bg: #0f1020;
+    --card: #1a1b2e;
+    --ink: #f4f5fb;
+    --muted: #a3a4c0;
+    --brand: #7c6cff;
+    --brand-ink: #fff;
+    --ok: #34d399;
+    --err: #fb7185;
+    --field: #24263f;
+    --line: #33355a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(120% 120% at 50% 0%, #1b1c34 0%, var(--bg) 55%);
+    color: var(--ink);
+    display: grid;
+    place-items: center;
+    padding: 1.5rem;
+  }
+  .card {
+    width: 100%;
+    max-width: 30rem;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+  }
+  .logo { font-size: 2rem; }
+  h1 { font-size: 1.5rem; margin: 0.75rem 0 0.4rem; }
+  p.sub { color: var(--muted); margin: 0 0 1.75rem; line-height: 1.55; }
+  label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+  .row { display: flex; gap: 0.5rem; }
+  input {
+    width: 100%;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.95rem;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--field);
+    color: var(--ink);
+    outline: none;
+  }
+  input:focus { border-color: var(--brand); }
+  button {
+    margin-top: 1.25rem;
+    width: 100%;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.9rem 1rem;
+    border: 0;
+    border-radius: 12px;
+    background: var(--brand);
+    color: var(--brand-ink);
+    cursor: pointer;
+    transition: transform 0.05s ease, opacity 0.2s ease;
+  }
+  button:hover { opacity: 0.92; }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .msg { margin-top: 1.1rem; font-size: 0.92rem; line-height: 1.5; min-height: 1.4em; }
+  .msg.err { color: var(--err); }
+  .msg.ok { color: var(--ok); }
+  .spinner {
+    display: inline-block; width: 1em; height: 1em; vertical-align: -0.15em;
+    border: 2px solid currentColor; border-right-color: transparent;
+    border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 0.5em;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .success { text-align: center; }
+  .success .big { font-size: 3rem; }
+  .success h1 { margin-top: 0.5rem; }
+  .foot { margin-top: 1.5rem; font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+  a { color: var(--brand); }
+</style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div id="form-view">
+      <div class="logo">🚀</div>
+      <h1>Let's get your team set up</h1>
+      <p class="sub">Paste the team key from your invite email below and press start.
+        This takes about a minute — we'll do the rest.</p>
+      <label for="key">Team key</label>
+      <input id="key" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false" />
+      <button id="go">Start</button>
+      <div class="msg" id="msg"></div>
+      <div class="foot">Your key stays on this computer. If anything looks stuck, just message Rohan
+        or raise your hand — no need to fix anything yourself.</div>
+    </div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const keyEl = $('key'), goEl = $('go'), msgEl = $('msg');
+
+  function setMsg(text, cls) { msgEl.className = 'msg' + (cls ? ' ' + cls : ''); msgEl.innerHTML = text; }
+
+  async function submit() {
+    const key = keyEl.value.trim();
+    if (!key) { setMsg('Paste your team key first.', 'err'); keyEl.focus(); return; }
+    goEl.disabled = true; keyEl.disabled = true;
+    setMsg('<span class="spinner"></span>Checking your key and starting things up…');
+    try {
+      const res = await fetch('/api/setup', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ key }),
+      });
+      const data = await res.json();
+      if (data.ok) { showSuccess(data.url); return; }
+      setMsg((data.error || 'That key did not work. Double-check it and try again.'), 'err');
+    } catch (e) {
+      setMsg('Could not reach the setup service. Give it a moment and try again.', 'err');
+    }
+    goEl.disabled = false; keyEl.disabled = false;
+  }
+
+  function showSuccess(url) {
+    $('card').innerHTML =
+      '<div class="success">' +
+      '<div class="big">✅</div>' +
+      '<h1>Team ready!</h1>' +
+      '<p class="sub">Everything is set up. Take a screenshot of this screen and send it to Rohan, ' +
+      'then click below to open your workspace.</p>' +
+      '<button id="open">Open my workspace</button>' +
+      '<div class="foot">Taking you there automatically… if it doesn\'t open, ' +
+      'click the button or go to <a href="' + url + '">' + url + '</a></div>' +
+      '</div>';
+    $('open').onclick = () => location.href = url;
+    setTimeout(() => { location.href = url; }, 3500);
+  }
+
+  goEl.onclick = submit;
+  keyEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+  keyEl.focus();
+</script>
+</body>
+</html>

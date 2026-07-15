@@ -20,6 +20,9 @@ echo "▸ Installing UI runtime deps (production only)…"
 echo "▸ Installing starter app deps…"
 ( cd "$TEST_DIR/project" && npm install --no-audit --no-fund )
 
+echo "▸ Installing setup script deps…"
+( cd "$TEST_DIR/setup" && npm install --no-audit --no-fund )
+
 echo "▸ Launching — the setup page will open. Paste a REAL team API key."
 cd "$TEST_DIR"
 exec node setup/server.mjs

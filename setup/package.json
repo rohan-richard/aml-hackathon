@@ -1,0 +1,8 @@
+{
+  "name": "aml-hackathon-setup",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@composio/core": "^0.13.1"
+  }
+}

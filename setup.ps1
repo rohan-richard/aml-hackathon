@@ -76,6 +76,9 @@ try {
   Push-Location (Join-Path $HomeDir 'project')
   & (Join-Path $NodeDir 'npm.cmd') install --no-audit --no-fund
   Pop-Location
+  Push-Location (Join-Path $HomeDir 'setup')
+  & (Join-Path $NodeDir 'npm.cmd') install --no-audit --no-fund
+  Pop-Location
   OK 'Components installed'
 
   # --- 5. Launch ---

@@ -36,7 +36,7 @@ node -e "const f='$STAGE/ui/package.json',p=require(f);delete p.scripts.prepare;
 cp -R "$REPO_ROOT/setup" "$STAGE/setup"
 cp -R "$REPO_ROOT/project" "$STAGE/project"
 # Don't ship the team's future node_modules / builds if present locally.
-rm -rf "$STAGE/project/node_modules" "$STAGE/project/dist"
+rm -rf "$STAGE/project/node_modules" "$STAGE/project/dist" "$STAGE/setup/node_modules"
 
 echo "▸ Packing bundle.tar.gz"
 ( cd "$STAGE" && tar -czf "$OUT/bundle.tar.gz" . )

@@ -33,8 +33,8 @@ async function patchFile(relPath, fn) {
   console.log(`patched ${relPath}`);
 }
 
-// 1. Lock the model picker to Sonnet only. `getSupportedModels()` returns this
-//    constant, so replacing OPTIONS + DEFAULT is the whole picker.
+// 1. Lock the model picker to Opus, Sonnet, and Haiku. `getSupportedModels()`
+//    returns this constant, so replacing OPTIONS + DEFAULT is the whole picker.
 await patchFile('server/modules/providers/list/claude/claude-models.provider.ts', (src) => {
   const start = 'export const CLAUDE_FALLBACK_MODELS: ProviderModelsDefinition = {';
   const startIdx = src.indexOf(start);
@@ -47,7 +47,7 @@ await patchFile('server/modules/providers/list/claude/claude-models.provider.ts'
     {
       value: "sonnet",
       label: "Sonnet",
-      description: "Claude Sonnet",
+      description: "Sonnet 4.6 · Best for everyday tasks · $3/$15 per Mtok",
       effort: {
         default: 'high',
         values: [
@@ -57,6 +57,26 @@ await patchFile('server/modules/providers/list/claude/claude-models.provider.ts'
           { value: 'max' },
         ],
       },
+    },
+    {
+      value: "opus",
+      label: "Opus",
+      description: "Opus 4.8 · Best for everyday, complex tasks · ~2× usage vs Sonnet",
+      effort: {
+        default: 'high',
+        values: [
+          { value: 'low' },
+          { value: 'medium' },
+          { value: 'high' },
+          { value: 'xhigh' },
+          { value: 'max' },
+        ],
+      },
+    },
+    {
+      value: "haiku",
+      label: "Haiku",
+      description: "Haiku 4.5 · Fastest for quick answers · $1/$5 per Mtok",
     },
   ],
   DEFAULT: 'sonnet',

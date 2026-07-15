@@ -63,6 +63,8 @@
   h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 0.45rem; }
   p.sub { color: var(--muted); margin: 0 0 1.9rem; line-height: 1.55; font-size: 0.97rem; }
   label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--subtle); margin-bottom: 0.55rem; letter-spacing: 0.01em; }
+  input + label { margin-top: 1.1rem; }
+  label .optional { opacity: 0.6; font-weight: 400; }
   input {
     width: 100%;
     font-family: ui-monospace, 'SF Mono', Menlo, monospace;
@@ -128,9 +130,11 @@
         This takes about a minute — we'll do the rest.</p>
       <label for="key">Team key</label>
       <input id="key" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false" />
+      <label for="composioKey">Google Workspace key <span class="optional">(optional)</span></label>
+      <input id="composioKey" type="password" placeholder="ak_..." autocomplete="off" spellcheck="false" />
       <button id="go">Start</button>
       <div class="msg" id="msg"></div>
-      <div class="foot">Your key stays on this computer. If anything looks stuck, just message Rohan
+      <div class="foot">Your keys stay on this computer. If anything looks stuck, just message Rohan
         or raise your hand — no need to fix anything yourself.</div>
       <div class="brandline">Amalgam · AI Hackathon</div>
     </div>
@@ -138,31 +142,45 @@
 
 <script>
   const $ = (id) => document.getElementById(id);
-  const keyEl = $('key'), goEl = $('go'), msgEl = $('msg');
+  const keyEl = $('key'), composioKeyEl = $('composioKey'), goEl = $('go'), msgEl = $('msg');
 
   function setMsg(text, cls) { msgEl.className = 'msg' + (cls ? ' ' + cls : ''); msgEl.innerHTML = text; }
 
   async function submit() {
     const key = keyEl.value.trim();
+    const composioKey = composioKeyEl.value.trim();
     if (!key) { setMsg('Paste your team key first.', 'err'); keyEl.focus(); return; }
-    goEl.disabled = true; keyEl.disabled = true;
+    goEl.disabled = true; keyEl.disabled = true; composioKeyEl.disabled = true;
     setMsg('<span class="spinner"></span>Checking your key and starting things up…');
     try {
       const res = await fetch('/api/setup', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ key }),
+        body: JSON.stringify({ key, composioKey: composioKey || undefined }),
       });
       const data = await res.json();
-      if (data.ok) { showSuccess(data.url); return; }
+      if (data.ok) { showSuccess(data.url, data.google); return; }
       setMsg((data.error || 'That key did not work. Double-check it and try again.'), 'err');
     } catch (e) {
       setMsg('Could not reach the setup service. Give it a moment and try again.', 'err');
     }
-    goEl.disabled = false; keyEl.disabled = false;
+    goEl.disabled = false; keyEl.disabled = false; composioKeyEl.disabled = false;
   }
 
-  function showSuccess(url) {
+  function googleNote(google) {
+    if (!google) return '';
+    if (google.status === 'connected' || google.status === 'already-connected') {
+      return '<div class="foot">✓ Google Workspace connected — you\'ll be asked to sign in with Google ' +
+        'the first time you use a Drive/Docs/Gmail tool.</div>';
+    }
+    if (google.status === 'failed') {
+      return '<div class="foot">⚠️ Couldn\'t connect Google Workspace (' + (google.error || 'unknown error') +
+        '). Refresh this page and try again, or check your Google Workspace key.</div>';
+    }
+    return ''; // 'skipped' — no key was provided, nothing to say
+  }
+
+  function showSuccess(url, google) {
     $('card').innerHTML =
       '<div class="success">' +
       '<div class="check">✅</div>' +
@@ -172,6 +190,7 @@
       '<button id="open">Open my workspace</button>' +
       '<div class="foot">Taking you there automatically… if it doesn\'t open, ' +
       'click the button or go to <a href="' + url + '">' + url + '</a></div>' +
+      googleNote(google) +
       '<div class="brandline">Amalgam · AI Hackathon</div>' +
       '</div>';
     $('open').onclick = () => location.href = url;

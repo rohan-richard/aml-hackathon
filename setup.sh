@@ -51,6 +51,7 @@ say "Installing components (the longest step)…"
 ( cd "$HOME_DIR/ui" && npm ci --omit=dev --no-audit --no-fund >/dev/null 2>&1 ) \
   || die "Dependency install failed. Check the office wifi and re-run, or see a helper."
 ( cd "$HOME_DIR/project" && npm install --no-audit --no-fund >/dev/null 2>&1 ) || true
+( cd "$HOME_DIR/setup" && npm install --no-audit --no-fund >/dev/null 2>&1 ) || true
 ok "Components installed"
 
 # --- 4. Launch ---

@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import https from 'node:https';
+import crypto from 'node:crypto';
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -13,6 +14,9 @@ const ROOT = path.resolve(__dirname, '..');
 const UI_DIR = path.join(ROOT, 'ui');
 const DATA_DIR = path.join(ROOT, 'data');
 const KEY_FILE = path.join(DATA_DIR, 'key');
+const COMPOSIO_KEY_FILE = path.join(DATA_DIR, 'composio-key');
+const COMPOSIO_USER_ID_FILE = path.join(DATA_DIR, 'composio-user-id');
+const PROJECT_MCP_FILE = path.join(ROOT, 'project', '.mcp.json');
 const DB_FILE = path.join(DATA_DIR, 'auth.db');
 const UI_LOG = path.join(DATA_DIR, 'ui.log');
 
@@ -79,6 +83,13 @@ async function seedUser() {
   const Database = require(path.join(UI_DIR, 'node_modules', 'better-sqlite3'));
   const db = new Database(DB_FILE);
   try {
+    // waitForUI() only proves the UI's HTTP server accepted a connection, not that
+    // its schema is committed to this exact file yet — a real Mac hit "no such
+    // table: users" here on first boot. Wait for the table before touching it.
+    for (let attempt = 0; !db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='users'").get(); attempt++) {
+      if (attempt >= 20) throw new Error('Timed out waiting for the users table in auth.db');
+      await new Promise((r) => setTimeout(r, 250));
+    }
     const row = db.prepare('SELECT COUNT(*) AS n FROM users').get();
     if (row.n === 0) {
       db.prepare('INSERT INTO users (username, password_hash, has_completed_onboarding) VALUES (?, ?, 1)')
@@ -160,6 +171,53 @@ async function readKey() {
   try { return (await readFile(KEY_FILE, 'utf8')).trim() || null; } catch { return null; }
 }
 
+async function readComposioKey() {
+  try { return (await readFile(COMPOSIO_KEY_FILE, 'utf8')).trim() || null; } catch { return null; }
+}
+
+async function ensureComposioUserId() {
+  try {
+    const existing = (await readFile(COMPOSIO_USER_ID_FILE, 'utf8')).trim();
+    if (existing) return existing;
+  } catch {}
+  const id = crypto.randomUUID();
+  await writeFile(COMPOSIO_USER_ID_FILE, id);
+  return id;
+}
+
+async function wireGoogleTools() {
+  // Optional add-on: teams that pasted a Composio key get a live "connect your
+  // Google account" prompt the first time their agent uses a Drive/Docs/Gmail
+  // tool. Anything that goes wrong here must not block the core setup flow —
+  // but callers still get a status back so the setup page can show it, rather
+  // than a failure being visible only in this process's terminal output.
+  const composioKey = await readComposioKey();
+  if (!composioKey) return { status: 'skipped' };
+
+  let config = { mcpServers: {} };
+  try { config = JSON.parse(await readFile(PROJECT_MCP_FILE, 'utf8')); } catch {}
+  config.mcpServers ||= {};
+  if (config.mcpServers.composio) return { status: 'already-connected' }; // don't re-mint on every relaunch
+
+  try {
+    const { Composio } = await import('@composio/core');
+    const composio = new Composio({ apiKey: composioKey });
+    const userId = await ensureComposioUserId();
+    const session = await composio.create(userId, { toolkits: ['googledrive', 'googledocs', 'gmail'] });
+    config.mcpServers.composio = {
+      type: 'http',
+      url: session.mcp.url,
+      headers: { 'x-api-key': composioKey },
+    };
+    await writeFile(PROJECT_MCP_FILE, JSON.stringify(config, null, 2));
+    console.log('Google Drive/Docs/Gmail MCP wired for this team.');
+    return { status: 'connected' };
+  } catch (e) {
+    console.error('Could not set up Google MCP tools (continuing without them):', e.message);
+    return { status: 'failed', error: e.message };
+  }
+}
+
 function registerProject() {
   // Register the starter workspace so it's the one (and, on a clean laptop, only)
   // project — claudecodeui auto-selects when exactly one exists, so the team lands
@@ -182,14 +240,20 @@ async function bringUpUI(key) {
   await startUI(key);
   await waitForUI();
   await seedUser();
+  const google = await wireGoogleTools();
   await registerProject();
+  return { google };
 }
 
 async function handleSetup(req, res) {
   let body = '';
   for await (const chunk of req) body += chunk;
-  let key;
-  try { key = JSON.parse(body).key?.trim(); } catch {}
+  let key, composioKey;
+  try {
+    const parsed = JSON.parse(body);
+    key = parsed.key?.trim();
+    composioKey = parsed.composioKey?.trim();
+  } catch {}
   if (!key) return json(res, 400, { ok: false, error: 'No key received. Paste your team key and try again.' });
 
   const v = await validateKey(key);
@@ -198,8 +262,9 @@ async function handleSetup(req, res) {
   try {
     await mkdir(DATA_DIR, { recursive: true });
     await writeFile(KEY_FILE, key, { mode: 0o600 });
-    await bringUpUI(key);
-    json(res, 200, { ok: true, url: UI_URL });
+    if (composioKey) await writeFile(COMPOSIO_KEY_FILE, composioKey, { mode: 0o600 });
+    const { google } = await bringUpUI(key);
+    json(res, 200, { ok: true, url: UI_URL, google });
   } catch (e) {
     console.error(e);
     json(res, 200, { ok: false, error: 'Setup hit a snag starting your workspace. Please tell Rohan or a helper.' });

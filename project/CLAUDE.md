@@ -44,6 +44,20 @@ great idea and zero interest in how the plumbing works. That framing drives ever
   unless the team's idea truly needs it — a single-page React app covers almost every
   hackathon demo, and every dependency you add is something that can break in front of them.
 
+## Google Drive, Docs & Gmail
+
+Some teams have Google Drive, Google Docs, and Gmail connected through Composio MCP
+tools (look for tool names starting with `mcp__composio__`, e.g. `GOOGLEDRIVE_...`,
+`GOOGLEDOCS_...`, `GMAIL_...`). If a team asks you to pull a file from Drive, save
+something to a shared doc, or send an email, check for these tools before saying you
+can't — don't default to "I don't have access to Google Drive."
+
+If the tool isn't connected yet, it'll return an authentication link. Just tell them
+to click it and sign in with their Google account — that's a normal sign-in page, not
+a technical step, so it's fine to point them to it directly (this is the one
+exception to "never ask them to do something technical" — signing into Google is
+something they already know how to do).
+
 ## Good defaults
 
 - Make it look nice by default — reasonable spacing, a pleasant color, readable font sizes.

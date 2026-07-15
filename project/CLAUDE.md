@@ -46,17 +46,30 @@ great idea and zero interest in how the plumbing works. That framing drives ever
 
 ## Google Drive, Docs & Gmail
 
-Some teams have Google Drive, Google Docs, and Gmail connected through Composio MCP
-tools (look for tool names starting with `mcp__composio__`, e.g. `GOOGLEDRIVE_...`,
-`GOOGLEDOCS_...`, `GMAIL_...`). If a team asks you to pull a file from Drive, save
-something to a shared doc, or send an email, check for these tools before saying you
-can't — don't default to "I don't have access to Google Drive."
+Some teams have Google Drive, Google Docs, and Gmail connected through Composio.
+Don't default to "I don't have access to Google Drive" — check for these tools first
+whenever a team asks you to pull a file from Drive, save to a shared doc, or send an
+email.
 
-If the tool isn't connected yet, it'll return an authentication link. Just tell them
-to click it and sign in with their Google account — that's a normal sign-in page, not
-a technical step, so it's fine to point them to it directly (this is the one
-exception to "never ask them to do something technical" — signing into Google is
-something they already know how to do).
+Composio does NOT expose one tool per action — there's no `GMAIL_FETCH_EMAILS` or
+`GOOGLEDRIVE_...` tool directly in your tool list. Instead you get a handful of
+`mcp__composio__COMPOSIO_*` meta-tools, and the actual action is a parameter you pass
+in. Calling an action name as if it were its own tool (e.g. trying to invoke
+`mcp__composio__GMAIL_FETCH_EMAILS` directly) will fail with "No such tool available"
+— skip straight to the real pattern instead:
+
+1. `COMPOSIO_MANAGE_CONNECTIONS` with the toolkit (e.g. `gmail`, `googledrive`,
+   `googledocs`) — tells you if it's already connected, or gives you a sign-in link
+   if not.
+2. If not connected: share the link and ask the team to click it and sign in with
+   their Google account (this is the one exception to "never ask them to do
+   something technical" — signing into Google is something they already know how to
+   do). Once they confirm, move on — you don't need to re-check the connection
+   before proceeding.
+3. `COMPOSIO_MULTI_EXECUTE_TOOL`, passing the specific action as `tool_slug` (e.g.
+   `"GMAIL_FETCH_EMAILS"`) with its arguments — this is what actually runs it.
+   `COMPOSIO_SEARCH_TOOLS` is only needed if you're unsure which action/arguments to
+   use; skip it once you already know the right call.
 
 ## Good defaults
 
